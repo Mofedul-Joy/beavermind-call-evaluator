@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Run } from "@/scoring/types";
 import { fetchRun } from "@/lib/run-client";
 import { RunHeader } from "@/components/RunHeader";
-import { ReportView } from "@/components/ReportView";
+import { ReportTabs } from "@/components/ReportTabs";
 import { RunRunning } from "@/components/RunRunning";
 import { RunFailed } from "@/components/RunFailed";
 
@@ -43,7 +43,7 @@ export function RunPageClient({ initialRun }: { initialRun: Run }) {
     <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
       <RunHeader run={run} />
       <div className="mt-10">
-        {run.status === "done" && run.report && <ReportView report={run.report} />}
+        {run.status === "done" && run.report && <ReportTabs run={run} onRun={setRun} />}
         {(run.status === "queued" || run.status === "running") && (
           <RunRunning status={run.status} startedAt={run.createdAt} />
         )}

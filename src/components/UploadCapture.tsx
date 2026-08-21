@@ -36,6 +36,7 @@ import {
   type UploadPhase,
 } from "@/lib/delivery-client";
 import { fetchRun } from "@/lib/run-client";
+import type { Run } from "@/scoring/types";
 import { FileIcon, Upload, X } from "./Icons";
 
 type Phase = "checking" | "idle" | UploadPhase | "done" | "failed";
@@ -46,7 +47,21 @@ function formatElapsed(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function UploadCapture({ runId }: { runId: string }) {
+export function UploadCapture({
+  runId,
+  onRun,
+}: {
+  runId: string;
+  /**
+   * Every run this component fetches, handed up as it arrives.
+   *
+   * It already polls the run to completion, and the page around it needs the same row to
+   * know whether the TONE tab exists yet. Without this the parent would either run a second
+   * poll loop against the same endpoint or sit on a stale row until a manual refresh.
+   */
+  onRun?: (run: Run) => void;
+}) {
+  const report = onRun ?? (() => {});
   const [phase, setPhase] = useState<Phase>("checking");
   const [filename, setFilename] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -88,8 +103,13 @@ export function UploadCapture({ runId }: { runId: string }) {
         return;
       }
       if (attemptId.current !== myAttempt) return;
+      if (!run) {
+        setPhase("idle");
+        return;
+      }
+      report(run);
 
-      if (!run || run.deliveryStatus === "none") {
+      if (run.deliveryStatus === "none") {
         setPhase("idle");
         return;
       }
@@ -130,6 +150,7 @@ export function UploadCapture({ runId }: { runId: string }) {
         return;
       }
       if (attemptId.current !== myAttempt || !run) return;
+      report(run);
 
       if (run.deliveryStatus === "done") {
         setPhase("done");
