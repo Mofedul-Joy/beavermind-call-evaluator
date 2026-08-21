@@ -3,15 +3,31 @@ export function formatUsd(usd: number): string {
   return `$${usd.toFixed(2)}`;
 }
 
+/**
+ * Timestamps are pinned to UTC and say so.
+ *
+ * Two reasons, and the second one is a bug this had. A report is a link people send
+ * each other, so "evaluated Aug 22, 12:03 AM" has to mean the same instant to the
+ * coach reading it as to the reviewer who sent it. And these render inside the client
+ * tree: without a fixed zone the server formatted in its own timezone and the browser
+ * reformatted in the reader's, which React counted as a hydration mismatch and threw
+ * away the server's markup for that subtree on every report page.
+ */
+const UTC = "UTC";
+
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: UTC,
+    timeZoneName: "short",
   }).format(new Date(iso));
 }
 
 export function formatDateShort(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(iso));
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: UTC }).format(
+    new Date(iso)
+  );
 }
 
 export type Tone = "green" | "amber" | "red" | "neutral";
