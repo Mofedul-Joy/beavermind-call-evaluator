@@ -3,18 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
     "compile:rubrics": "tsx scripts/compile-rubrics.ts",
-    "test": "tsx --test src/scoring/*.test.ts",
+    "dev": "next dev",
     "fixtures": "tsx scripts/make-fixtures.ts",
+    "lint": "eslint",
+    "start": "next start",
+    "test": "tsx --test src/scoring/*.test.ts",
     "test:delivery": "python3 delivery/test_metrics.py"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "@sparticuz/chromium": "^149.0.0",
+    "@supabase/supabase-js": "^2.112.3",
     "next": "16.3.2",
+    "pg": "^8.23.0",
     "puppeteer-core": "^25.1.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
