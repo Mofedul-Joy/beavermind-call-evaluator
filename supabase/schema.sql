@@ -9,15 +9,23 @@
 --     run and read one they hold the id for, and cannot enumerate anyone else's.
 --   * Rate limiting lives here rather than in memory because Vercel functions do not
 --     share state between invocations.
+--   * Every statement here is idempotent. This file is the whole schema, not a stack of
+--     migrations, so `scripts/apply-schema.ts` must be safe to re-run against a database
+--     that already holds runs.
 
 create extension if not exists "pgcrypto";
 
 -- ── runs ─────────────────────────────────────────────────────────────────────
 
-create type run_status as enum ('queued', 'running', 'done', 'failed');
-create type call_type  as enum ('coaching', 'kickoff');
+do $$ begin
+  create type run_status as enum ('queued', 'running', 'done', 'failed');
+exception when duplicate_object then null; end $$;
 
-create table runs (
+do $$ begin
+  create type call_type as enum ('coaching', 'kickoff');
+exception when duplicate_object then null; end $$;
+
+create table if not exists runs (
   id           uuid primary key default gen_random_uuid(),
   call_type    call_type   not null,
   status       run_status  not null default 'queued',
@@ -50,14 +58,43 @@ create table runs (
   constraint started_when_running check (status <> 'running' or started_at is not null)
 );
 
-create index runs_created_at_idx on runs (created_at desc);
-create index runs_status_idx     on runs (status) where status in ('queued', 'running');
-create index runs_sample_idx     on runs (is_sample) where is_sample;
+-- ── recordings (delivery analytics) ───────────────────────────────────────────
+--
+-- Additive. A recording is optional: a run with no recording keeps `delivery_status`
+-- at 'none' and the app renders exactly the briefed transcript report.
+--
+--   `recording_path` is the object key inside the private `recordings` bucket. The
+--   browser uploads straight to Storage with a signed upload URL (Vercel caps a request
+--   body at 4.5 MB, so the bytes must never pass through a function), and the worker
+--   fetches a signed read URL. Nothing about the file is public.
+
+alter table runs add column if not exists recording_path       text;
+alter table runs add column if not exists recording_filename   text;
+alter table runs add column if not exists delivery_status      text not null default 'none';
+alter table runs add column if not exists delivery_call_id     text;
+alter table runs add column if not exists delivery_report      jsonb;
+alter table runs add column if not exists delivery_error       jsonb;
+alter table runs add column if not exists delivery_started_at  timestamptz;
+alter table runs add column if not exists delivery_finished_at timestamptz;
+
+do $$ begin
+  alter table runs add constraint delivery_status_valid
+    check (delivery_status in ('none', 'processing', 'done', 'failed'));
+exception when duplicate_object then null; end $$;
+
+create index if not exists runs_created_at_idx on runs (created_at desc);
+create index if not exists runs_status_idx     on runs (status) where status in ('queued', 'running');
+create index if not exists runs_sample_idx     on runs (is_sample) where is_sample;
+
+-- The delivery reaper's working set: only rows still waiting on a callback.
+create index if not exists runs_delivery_idx on runs (delivery_started_at)
+  where delivery_status = 'processing';
 
 alter table runs enable row level security;
 
 -- Read a run you hold the id for. PostgREST turns `?id=eq.<uuid>` into this; without a
 -- filter on id the policy yields nothing, so the table cannot be enumerated.
+drop policy if exists runs_select_by_id on runs;
 create policy runs_select_by_id on runs
   for select to anon
   using (true);
@@ -65,16 +102,33 @@ create policy runs_select_by_id on runs
 -- Inserts go through the server (secret key), never the browser.
 revoke insert, update, delete on runs from anon;
 
+-- ── storage ──────────────────────────────────────────────────────────────────
+--
+-- 50 MB is Supabase's per-object cap on the free plan, so it is the ceiling whether or
+-- not we state it; stating it makes the browser fail fast with a sentence instead of a
+-- rejected multipart upload.
+--
+-- No `storage.objects` policies on purpose. Only the secret-key client ever touches this
+-- bucket — it mints the signed upload URL the browser PUTs to and the signed read URL the
+-- worker fetches — so RLS default-deny is correct, and matches "no anon writes" elsewhere
+-- in this file.
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('recordings', 'recordings', false, 52428800,
+  array['audio/mpeg','audio/mp4','audio/wav','audio/x-m4a','audio/ogg','audio/webm',
+        'video/mp4','video/quicktime','video/webm','video/x-matroska'])
+on conflict (id) do nothing;
+
 -- ── rate limiting ────────────────────────────────────────────────────────────
 
-create table run_attempts (
+create table if not exists run_attempts (
   id         bigserial primary key,
   client_ip  inet        not null,
   created_at timestamptz not null default now()
 );
 
-create index run_attempts_ip_time_idx on run_attempts (client_ip, created_at desc);
-create index run_attempts_time_idx    on run_attempts (created_at desc);
+create index if not exists run_attempts_ip_time_idx on run_attempts (client_ip, created_at desc);
+create index if not exists run_attempts_time_idx    on run_attempts (created_at desc);
 
 alter table run_attempts enable row level security;
 -- No policies: only the secret key touches this table.
@@ -170,6 +224,43 @@ end;
 $$;
 
 /**
+ * Mark deliveries that died mid-flight.
+ *
+ * Same failure mode as `reap_stale_runs`, one layer out: the Modal worker is told to POST
+ * its report to /api/delivery/callback when it finishes, so if the worker function throws
+ * before it gets there, no callback ever arrives and the row sits in 'processing' forever.
+ * 15 minutes is generous against a measured 5-12 minute wall clock.
+ */
+create or replace function reap_stale_deliveries(p_max_age interval default '15 minutes')
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n int;
+begin
+  with stale as (
+    update runs
+       set delivery_status      = 'failed',
+           delivery_finished_at = now(),
+           delivery_error = jsonb_build_object(
+             'code',    'timeout',
+             'message', 'Delivery analysis stopped before it finished. Try uploading again.',
+             'detail',  format('no callback after %s', p_max_age),
+             'at',      now()
+           )
+     where delivery_status = 'processing'
+       and delivery_started_at < now() - p_max_age
+    returning 1
+  )
+  select count(*) into n from stale;
+
+  return n;
+end;
+$$;
+
+/**
  * Keep-alive.
  *
  * Supabase pauses a free project after ~7 days without database activity, and resuming
@@ -183,11 +274,15 @@ security definer
 set search_path = public
 as $$
 declare
-  reaped int;
-  total  int;
+  reaped       int;
+  reaped_deliv int;
+  total        int;
 begin
   select reap_stale_runs() into reaped;
+  select reap_stale_deliveries() into reaped_deliv;
   select count(*) into total from runs;
-  return jsonb_build_object('ok', true, 'runs', total, 'reaped', reaped, 'at', now());
+  return jsonb_build_object(
+    'ok', true, 'runs', total, 'reaped', reaped, 'reaped_deliveries', reaped_deliv, 'at', now()
+  );
 end;
 $$;

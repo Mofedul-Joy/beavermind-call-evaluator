@@ -184,6 +184,11 @@ function makeRun(args: {
     createdAt: '2026-08-21T12:04:00.000Z',
     startedAt: '2026-08-21T12:04:01.000Z',
     finishedAt: '2026-08-21T12:05:12.000Z',
+    // Fixtures are transcript-only. No recording, so delivery never starts.
+    recordingFilename: null,
+    deliveryStatus: 'none',
+    deliveryReport: null,
+    deliveryError: null,
   }
 }
 

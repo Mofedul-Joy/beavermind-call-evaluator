@@ -55,3 +55,22 @@ export const Flag = (p: { size?: number; className?: string }) => (
     <path d="M3.25 2v12M3.25 2.5h8.2c.6 0 .9.7.5 1.1L9.75 6l2.2 2.4c.4.4.1 1.1-.5 1.1h-8.2" />
   </Icon>
 );
+
+export const Upload = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M8 10.5v-7M5 6 8 3l3 3M3 12.5h10" />
+  </Icon>
+);
+
+export const FileIcon = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M4.5 2h4l3 3v8.5a.5.5 0 0 1-.5.5h-6.5a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5Z" />
+    <path d="M8.5 2v3h3" />
+  </Icon>
+);
+
+export const X = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M4 4l8 8M12 4l-8 8" />
+  </Icon>
+);
