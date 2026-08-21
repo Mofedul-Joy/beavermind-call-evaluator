@@ -97,6 +97,12 @@ function floorScore(d: Dimension): number {
   return Math.min(...allowedScores(d))
 }
 
+/** The next value down the dimension's own scale. Where a contradicted maximum lands. */
+function oneBucketBelow(d: Dimension, from: number): number {
+  const below = allowedScores(d).filter((v) => v < from)
+  return below.length ? Math.max(...below) : from
+}
+
 /**
  * Check the model's answer against the rubric and the transcript.
  *
@@ -138,7 +144,12 @@ export function validateAnswer(answer: ModelAnswer, rubric: CompiledRubric, t: N
       // The rubric's own rule: a score must rest on transcript evidence.
       if (a.evidence.length === 0)
         problems.push(`D${d.n} is scored but cites no evidence — use status "not_evidenced" instead`)
-      if (!a.quickFix) problems.push(`D${d.n} is scored but has no quick fix`)
+      // A quickFix is required below the maximum and forbidden at it. It completes
+      // "To reach {max}: ...", which has nothing to say once the score IS the maximum.
+      // Demanding one everywhere is what made the answer incoherent: the model was
+      // required to name an improvement for a dimension it had just called perfect.
+      if (a.score !== d.max && !a.quickFix)
+        problems.push(`D${d.n} is scored below its maximum but has no quick fix`)
     }
 
     if (a.status !== 'scored' && !a.statusReason)
@@ -192,6 +203,7 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
 
   const applied: AppliedCap[] = []
   const dimensions: DimensionResult[] = []
+  const ceilingAdjustments: ScoreTrace['ceilingAdjustments'] = []
 
   for (const d of rubric.dimensions) {
     const a = answer.dimensions.find((x) => x.key === d.key)!
@@ -201,6 +213,34 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
     // than requested in the prompt.
     let raw: number | null =
       a.status === 'disabled' ? null : a.status === 'not_evidenced' ? floorScore(d) : a.score
+
+    // The same rule at the other end of the scale. `quickFix` completes the sentence
+    // "To reach {max}: ...", so a dimension sitting at its maximum WITH a quickFix is the
+    // answer contradicting itself — it has named something that would have improved a
+    // score it also called perfect. Measured on the client's own transcripts: the model
+    // put eleven of twelve dimensions at maximum and wrote a real, specific improvement
+    // under every one of them, while nominating one of those same improvements as the
+    // single most important change in the call.
+    //
+    // Asking for it in the prompt moved the number but never closed the gap, so like the
+    // floor rule above it is enforced here. That makes the contradiction unrepresentable
+    // rather than merely detectable, which is the same reason evidence is line numbers
+    // instead of quoted text.
+    let ceilingAdjusted = false
+    if (a.status === 'scored' && raw !== null && raw === d.max && a.quickFix?.trim()) {
+      const lowered = oneBucketBelow(d, d.max)
+      if (lowered !== d.max) {
+        ceilingAdjustments.push({
+          n: d.n,
+          title: d.title,
+          from: d.max,
+          to: lowered,
+          quickFix: a.quickFix.trim(),
+        })
+        raw = lowered
+        ceilingAdjusted = true
+      }
+    }
 
     let score = raw
     let capped = false
@@ -241,6 +281,7 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
       quickFix: a.quickFix,
       statusReason: a.statusReason,
       capped,
+      ceilingAdjusted,
     })
   }
 
@@ -295,6 +336,7 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
     denominator,
     excluded,
     capsApplied: applied,
+    ceilingAdjustments,
     totalAfterDimensionCaps,
     totalCapApplied,
     normalised,

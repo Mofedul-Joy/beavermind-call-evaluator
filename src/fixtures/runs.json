@@ -831,7 +831,8 @@
             }
           ],
           "quickFix": "To reach 10: Specific goals.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 2,
@@ -861,7 +862,8 @@
             }
           ],
           "quickFix": "To reach 10: Client shares personal stories unprompted.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 3,
@@ -891,7 +893,8 @@
             }
           ],
           "quickFix": "To reach 5: Time stated (\"we've got 30 minutes\").",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 4,
@@ -906,7 +909,8 @@
           "evidence": [],
           "quickFix": null,
           "statusReason": "No transcript line covers goal alignment & deep why.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 5,
@@ -936,7 +940,8 @@
             }
           ],
           "quickFix": "To reach 10: \"Movement Retraining → Remodeling → Integrating\" (or any equivalent phrasing in correct order).",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 6,
@@ -951,7 +956,8 @@
           "evidence": [],
           "quickFix": null,
           "statusReason": "No transcript line covers journey & expectation setting.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 7,
@@ -981,7 +987,8 @@
             }
           ],
           "quickFix": "To reach 5: \"the training app is our main channel\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 8,
@@ -996,7 +1003,8 @@
           "evidence": [],
           "quickFix": null,
           "statusReason": "No transcript line covers coaching intelligence questions.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 9,
@@ -1026,7 +1034,8 @@
             }
           ],
           "quickFix": "To reach 10: \"Here's what you do: open the training app, find diagnostics, film, upload\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 10,
@@ -1056,7 +1065,8 @@
             }
           ],
           "quickFix": "To reach 5: \"Let's book it now before we close\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 11,
@@ -1086,7 +1096,8 @@
             }
           ],
           "quickFix": "To reach 5: \"Here's what we covered…\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 12,
@@ -1116,7 +1127,8 @@
             }
           ],
           "quickFix": "To reach 5: \"I'll send you the recap in the next 10–15 minutes\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         }
       ],
       "trace": {
@@ -1124,6 +1136,7 @@
         "denominator": 100,
         "excluded": [],
         "capsApplied": [],
+        "ceilingAdjustments": [],
         "totalAfterDimensionCaps": 24.5,
         "totalCapApplied": null,
         "normalised": 25,
@@ -1138,6 +1151,7 @@
       "inputTokens": 4256,
       "cachedInputTokens": 4000,
       "outputTokens": 2600,
+      "thinkingTokens": null,
       "usd": 0.0353,
       "model": "claude-sonnet-5"
     },
@@ -3292,7 +3306,8 @@
             }
           ],
           "quickFix": "To reach 10: Coach adjusts call plan based on check-in answers.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 2,
@@ -3322,7 +3337,8 @@
             }
           ],
           "quickFix": "To reach 10: Coach explicitly selects movements tied to client's presenting goal.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 3,
@@ -3351,8 +3367,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 15: 12-month vision referenced by name.",
-          "capped": true
+          "quickFix": "",
+          "capped": true,
+          "ceilingAdjusted": false
         },
         {
           "n": 4,
@@ -3382,7 +3399,8 @@
             }
           ],
           "quickFix": "To reach 15: Client has an \"aha\" moment.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 5,
@@ -3412,7 +3430,8 @@
             }
           ],
           "quickFix": "To reach 10: Client says \"Oh, that makes sense\".",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 6,
@@ -3442,7 +3461,8 @@
             }
           ],
           "quickFix": "To reach 15: Client repeats back their commitment.",
-          "capped": false
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 7,
@@ -3471,8 +3491,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Coach names \"your one accountability task is...\".",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 8,
@@ -3501,8 +3522,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Coach asks multiple questions before offering solutions.",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 9,
@@ -3531,8 +3553,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Celebration references something specific from THIS call.",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 10,
@@ -3561,8 +3584,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Date confirmed verbally.",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 11,
@@ -3591,8 +3615,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Coach gives specific day for their deliverable.",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         },
         {
           "n": 12,
@@ -3621,8 +3646,9 @@
               "text": "I believe it. Right, one more quick check before we set the plan for today, how's sleep been, generally, because that always ties into how the hip feels and how much patience you've got for anything extra."
             }
           ],
-          "quickFix": "To reach 5: Natural transitions between sections.",
-          "capped": false
+          "quickFix": "",
+          "capped": false,
+          "ceilingAdjusted": false
         }
       ],
       "trace": {
@@ -3646,6 +3672,7 @@
             "reasoning": "The condition holds — see the cited line."
           }
         ],
+        "ceilingAdjustments": [],
         "totalAfterDimensionCaps": 81,
         "totalCapApplied": null,
         "normalised": 77,
@@ -3660,6 +3687,7 @@
       "inputTokens": 17512,
       "cachedInputTokens": 4000,
       "outputTokens": 2600,
+      "thinkingTokens": null,
       "usd": 0.0618,
       "model": "claude-sonnet-5"
     },

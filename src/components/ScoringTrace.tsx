@@ -44,6 +44,25 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
             </div>
           )}
 
+          {trace.ceilingAdjustments.length > 0 && (
+            <div className="space-y-3">
+              <p className="micro-label">Taken off maximum</p>
+              <p className="text-body">
+                The scorer awarded full marks and, underneath, named something the coach could have done
+                better. A quick fix completes &ldquo;to reach the maximum&rdquo;, so those two cannot both be
+                true. Resolved toward the criticism.
+              </p>
+              {trace.ceilingAdjustments.map((adj) => (
+                <div key={adj.n} className="rounded-lg bg-black/[.03] px-4 py-3">
+                  <p className="font-medium text-ink">
+                    D{adj.n} {adj.title}: {adj.from} → {adj.to}
+                  </p>
+                  <p className="mt-1 text-body">{adj.quickFix}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {trace.capsApplied.length > 0 && (
             <div className="space-y-3">
               <p className="micro-label">Caps applied</p>

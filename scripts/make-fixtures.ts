@@ -111,7 +111,12 @@ function answerFor(
         score,
         rationale: `Scored ${score}/${d.max} because ${d.whatToLookFor.replace(/^Does /, 'the coach ').replace(/\?$/, '').toLowerCase()} — partially, and without tying it back to what the client said they wanted.`,
         evidence: profile === 'thin' ? [6, 18, 24] : [12, 27, 41],
-        quickFix: `To reach ${d.max}: ${d.positiveSignals[0] ?? 'cover the behaviour explicitly and confirm the client heard it'}.`,
+        // Empty at the maximum: quickFix completes "To reach {max}: ...", which has
+        // nothing to say once the score is the maximum. The engine enforces this.
+        quickFix:
+          score === d.max
+            ? ''
+            : `To reach ${d.max}: ${d.positiveSignals[0] ?? 'cover the behaviour explicitly and confirm the client heard it'}.`,
       }
     }),
     capFindings: r.caps.map((c) => ({
@@ -164,6 +169,7 @@ function makeRun(args: {
       inputTokens,
       cachedInputTokens,
       outputTokens,
+      thinkingTokens: null,
       usd:
         Number(
           (

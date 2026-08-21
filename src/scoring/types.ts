@@ -111,6 +111,11 @@ export type DimensionResult = {
   statusReason?: string
   /** True when a cap changed this dimension's score. */
   capped: boolean
+  /**
+   * True when the engine lowered this dimension off its maximum because the answer
+   * also named a specific improvement for it. See `ScoreTrace.ceilingAdjustments`.
+   */
+  ceilingAdjusted: boolean
 }
 
 /**
@@ -128,6 +133,15 @@ export type ScoreTrace = {
   /** Dimensions excluded from the denominator, with why. */
   excluded: { n: number; title: string; max: number; reason: string }[]
   capsApplied: AppliedCap[]
+  /**
+   * Dimensions the engine took off their maximum.
+   *
+   * `quickFix` completes "To reach {max}: ...", so a maximum with a quickFix under it is
+   * the answer contradicting itself. The engine resolves it toward the criticism rather
+   * than toward the flattering score, and records it here so the report can show it
+   * happened instead of quietly presenting a different number.
+   */
+  ceilingAdjustments: { n: number; title: string; from: number; to: number; quickFix: string }[]
   /** After dimension caps, before total caps. */
   totalAfterDimensionCaps: number
   /** The binding total cap, if any bit. */
@@ -179,6 +193,15 @@ export type RunCost = {
   inputTokens: number
   cachedInputTokens: number
   outputTokens: number
+  /**
+   * How much of `outputTokens` was internal reasoning rather than the answer.
+   *
+   * Reported because it is most of the bill — the answer itself is a couple of thousand
+   * tokens and the reasoning is ten times that. Without this split the cost figure looks
+   * inexplicable, and there is no way to judge whether a cheaper effort level is worth
+   * trying. Null on a model or SDK that does not report it.
+   */
+  thinkingTokens: number | null
   usd: number
   model: string
 }

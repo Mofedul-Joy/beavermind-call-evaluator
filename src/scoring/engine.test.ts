@@ -35,13 +35,17 @@ function baseAnswer(rubric: CompiledRubric, score: 'top' | 'floor' = 'top'): Mod
     redFlags: [{ title: 'No vision tie', why: 'Retention risk.', evidence: [3] }],
     dimensions: rubric.dimensions.map<ModelDimensionAnswer>((d) => {
       const allowed = allowedScores(d)
+      const value = score === 'top' ? Math.max(...allowed) : Math.min(...allowed)
       return {
         key: d.key,
         status: 'scored',
-        score: score === 'top' ? Math.max(...allowed) : Math.min(...allowed),
+        score: value,
         rationale: `Scored because of the check-in.`,
         evidence: [1],
-        quickFix: `To reach ${d.max}: do the thing.`,
+        // Empty at the maximum. A quickFix names something that would have improved the
+        // dimension, so writing one under a maximum contradicts the score, and the engine
+        // resolves that toward the criticism. See the ceiling tests below.
+        quickFix: value === d.max ? '' : `To reach ${d.max}: do the thing.`,
       }
     }),
     capFindings: rubric.caps.map((c) => ({ capId: c.id, holds: false, evidence: [], reasoning: 'Not present.' })),
@@ -260,6 +264,45 @@ describe('buildReport', () => {
     assert.equal(r.trace.denominator, 105 - d4.max, 'denominator is 90, not the stated 85')
     assert.equal(r.trace.excluded[0].n, d4.n)
     assert.equal(r.trace.normalised, 100, 'a perfect call is still 100 with D4 off')
+  })
+
+  test('a maximum with a quickFix under it is lowered one bucket', () => {
+    // The model repeatedly did this on the client's own transcripts: full marks, and a
+    // real, specific improvement written underneath. The engine resolves the
+    // contradiction toward the criticism rather than the flattering score.
+    const a = baseAnswer(coaching, 'top')
+    const d1 = coaching.dimensions[0] // discrete: 0, 3, 7, 10
+    a.dimensions[0].quickFix = 'To reach 10: name the muscle group earlier.'
+
+    const r = buildReport(a, coaching, t)
+    assert.equal(r.dimensions[0].score, 7, 'dropped to the next bucket its own table allows')
+    assert.equal(r.dimensions[0].ceilingAdjusted, true)
+    assert.equal(r.trace.ceilingAdjustments.length, 1)
+    assert.deepEqual(
+      { n: r.trace.ceilingAdjustments[0].n, from: r.trace.ceilingAdjustments[0].from, to: r.trace.ceilingAdjustments[0].to },
+      { n: d1.n, from: 10, to: 7 },
+      'the trace records it rather than quietly showing a different number',
+    )
+  })
+
+  test('a maximum with no quickFix stands', () => {
+    const r = buildReport(baseAnswer(coaching, 'top'), coaching, t)
+    assert.equal(r.trace.ceilingAdjustments.length, 0)
+    assert.equal(r.trace.normalised, 100, 'a genuinely flawless call is still allowed to be flawless')
+  })
+
+  test('a whitespace-only quickFix is not a criticism', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].quickFix = '   '
+    assert.equal(buildReport(a, coaching, t).dimensions[0].score, coaching.dimensions[0].max)
+  })
+
+  test('a quickFix below the maximum changes nothing', () => {
+    const a = baseAnswer(coaching, 'floor')
+    a.dimensions[0].quickFix = 'To reach 10: do the thing.'
+    const r = buildReport(a, coaching, t)
+    assert.equal(r.dimensions[0].ceilingAdjusted, false)
+    assert.equal(r.trace.ceilingAdjustments.length, 0)
   })
 
   test('the same answer always produces the same report', () => {

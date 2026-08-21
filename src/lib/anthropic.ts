@@ -50,6 +50,7 @@ export async function scoreTranscript(
   let inputTokens = 0
   let cachedInputTokens = 0
   let outputTokens = 0
+  let thinkingTokens: number | null = null
 
   const call = async (): Promise<Anthropic.Message> => {
     const response = await client().messages.create({
@@ -57,12 +58,24 @@ export async function scoreTranscript(
       max_tokens: 16000,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages,
-      output_config: { format: { type: 'json_schema', schema } }, // default effort — see NOTES-backend.md
+      output_config: {
+        format: { type: 'json_schema', schema },
+        // Left at the model's default. Most of the bill is reasoning — roughly 10k-16k of
+        // the output tokens on these transcripts — so this is the one dial that moves
+        // cost materially. `scripts/calibrate.ts` re-scores the samples at a chosen
+        // effort so the trade-off is measured rather than assumed.
+        ...(process.env.ANTHROPIC_EFFORT
+          ? { effort: process.env.ANTHROPIC_EFFORT as 'low' | 'medium' | 'high' | 'xhigh' | 'max' }
+          : {}),
+      },
     })
 
     inputTokens += response.usage.input_tokens + (response.usage.cache_creation_input_tokens ?? 0)
     cachedInputTokens += response.usage.cache_read_input_tokens ?? 0
     outputTokens += response.usage.output_tokens
+
+    const reasoning = response.usage.output_tokens_details?.thinking_tokens
+    if (typeof reasoning === 'number') thinkingTokens = (thinkingTokens ?? 0) + reasoning
 
     if (response.stop_reason === 'refusal')
       throw new ModelRefused(response.stop_details?.explanation ?? 'the model declined to score this call')
@@ -108,6 +121,7 @@ export async function scoreTranscript(
       inputTokens,
       cachedInputTokens,
       outputTokens,
+      thinkingTokens,
       usd:
         (inputTokens * USD_PER_INPUT_MTOK +
           cachedInputTokens * USD_PER_INPUT_MTOK * CACHE_READ_MULTIPLIER +
