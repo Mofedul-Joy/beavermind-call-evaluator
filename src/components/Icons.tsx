@@ -55,3 +55,9 @@ export const Flag = (p: { size?: number; className?: string }) => (
     <path d="M3.25 2v12M3.25 2.5h8.2c.6 0 .9.7.5 1.1L9.75 6l2.2 2.4c.4.4.1 1.1-.5 1.1h-8.2" />
   </Icon>
 );
+
+export const ArrowRight = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M3.5 8h9M9 4.5 12.5 8 9 11.5" />
+  </Icon>
+);

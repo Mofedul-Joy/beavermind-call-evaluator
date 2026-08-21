@@ -44,7 +44,9 @@ export function RunPageClient({ initialRun }: { initialRun: Run }) {
       <RunHeader run={run} />
       <div className="mt-10">
         {run.status === "done" && run.report && <ReportView report={run.report} />}
-        {(run.status === "queued" || run.status === "running") && <RunRunning />}
+        {(run.status === "queued" || run.status === "running") && (
+          <RunRunning status={run.status} startedAt={run.createdAt} />
+        )}
         {run.status === "failed" && run.error && <RunFailed error={run.error} />}
       </div>
     </div>

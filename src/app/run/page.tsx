@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { listSampleRuns } from "@/lib/client-data";
 import { PasteForm, type SampleOption } from "@/components/PasteForm";
+
+export const metadata: Metadata = {
+  title: "Run an evaluation",
+};
 
 export default async function RunFormPage() {
   const samples = await listSampleRuns();

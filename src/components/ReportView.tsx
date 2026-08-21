@@ -3,9 +3,10 @@ import { TheOneThing } from "./TheOneThing";
 import { RedFlags } from "./RedFlags";
 import { ScoreGauge } from "./ScoreGauge";
 import { BandChip } from "./BandChip";
+import { VerdictReveal } from "./VerdictReveal";
 import { ScoringTrace } from "./ScoringTrace";
 import { DimensionRow } from "./DimensionRow";
-import { DimensionRail } from "./DimensionRail";
+import { DimensionRail, type RailItem } from "./DimensionRail";
 
 /** A labelled block. The label-to-content gap is deliberately tighter than the gap between
  *  sections, so the label reads as belonging to what follows it rather than floating. */
@@ -51,7 +52,11 @@ function findCap(report: Report, n: number) {
  * way down the page.
  */
 export function ReportView({ report, print = false }: { report: Report; print?: boolean }) {
-  const ids = report.dimensions.map((d) => dimensionId(d.n));
+  const railItems: RailItem[] = report.dimensions.map((d) => ({
+    id: dimensionId(d.n),
+    n: d.n,
+    title: d.title,
+  }));
   const { trace } = report;
 
   return (
@@ -70,11 +75,16 @@ export function ReportView({ report, print = false }: { report: Report; print?: 
                 that is the reading order on a wide layout, but on a phone a nine-line quote
                 would push the score — the fastest read on the page — below the fold. */}
             <div className="order-first flex flex-col items-center gap-3 border-b border-border pb-8 lg:order-none lg:w-[248px] lg:border-b-0 lg:border-l lg:pb-0 lg:pl-10">
-              <ScoreGauge score={trace.normalised} band={trace.band.name} />
-              <BandChip band={trace.band.name} />
-              <p className="max-w-[26ch] text-center text-sm leading-relaxed text-muted">
-                {trace.band.description}
-              </p>
+              <ScoreGauge score={trace.normalised} band={trace.band.name} animate={!print} />
+              {/* The word for the number lands after the needle does. Reading the
+                  verdict before the score have you arriving at the arc already
+                  knowing the answer, which wastes the only moment this page has. */}
+              <VerdictReveal animate={!print} className="flex flex-col items-center gap-3">
+                <BandChip band={trace.band.name} />
+                <p className="max-w-[26ch] text-center text-sm leading-relaxed text-muted">
+                  {trace.band.description}
+                </p>
+              </VerdictReveal>
             </div>
           </div>
         </section>
@@ -106,20 +116,24 @@ export function ReportView({ report, print = false }: { report: Report; print?: 
           className="mt-12"
         >
           <div className="card overflow-hidden">
-            {report.dimensions.map((dim) => (
+            {report.dimensions.map((dim, i) => (
               <DimensionRow
                 key={dim.n}
                 id={dimensionId(dim.n)}
                 dim={dim}
                 cap={findCap(report, dim.n)}
                 forceOpen={print}
+                /* Twelve rows over ~200ms total. Longer and the list reads as slow
+                   rather than considered, so the per-row delay stops climbing at
+                   row 11 instead of running to twelve times the step. */
+                index={print ? undefined : Math.min(i, 11)}
               />
             ))}
           </div>
         </Section>
       </div>
 
-      {!print && <DimensionRail ids={ids} />}
+      {!print && <DimensionRail items={railItems} />}
     </div>
   );
 }

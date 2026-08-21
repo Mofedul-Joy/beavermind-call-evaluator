@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CallType } from "@/scoring/types";
+import { numberTranscript } from "@/scoring/engine";
 import { createRun } from "@/lib/run-client";
 import { callTypeLabel } from "@/lib/format";
 
@@ -25,6 +26,14 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
   const [error, setError] = useState<string | null>(null);
 
   const overLimit = transcript.length > MAX_CHARS;
+
+  /* The same parser the server runs, so what this reports is what will actually be
+     scored rather than a second guess at it. Unlabelled lines are the one failure
+     the operator can fix, and finding out about it here costs a second instead of
+     the four minutes it takes a run to come back as transcript_unparseable. */
+  const parsed = useMemo(() => (transcript.trim() ? numberTranscript(transcript) : null), [transcript]);
+  const named = parsed?.speakers.filter((s) => s !== "Unknown") ?? [];
+  const unlabelled = parsed !== null && named.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,9 +118,35 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
           rows={14}
           className={`scroll-x mt-2 resize-y leading-relaxed ${field}`}
         />
-        <p className={`mt-2 text-right text-xs tabular-nums ${overLimit ? "text-red-ink" : "text-muted"}`}>
-          {transcript.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
-        </p>
+        {/* A transcript landing in an empty box is the only event on this page.
+            Acknowledging it with what was actually read back turns a blind paste
+            into a check the operator can make before committing four minutes. */}
+        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
+          <p className={parsed ? "text-body" : "text-muted"} key={parsed ? "read" : "empty"}>
+            {parsed ? (
+              <span className="inline-flex flex-wrap items-baseline gap-x-1.5 motion-safe:animate-[rise_240ms_var(--ease-out-expo)_both]">
+                <span className="font-medium tabular-nums text-ink">{parsed.lines.length}</span>
+                <span>turn{parsed.lines.length === 1 ? "" : "s"} read.</span>
+                {named.length > 0 ? (
+                  <span className="text-muted">
+                    Speakers: <span className="text-body">{named.join(", ")}</span>.
+                  </span>
+                ) : (
+                  <span className="text-amber-ink">
+                    No speaker labels found. Each line should read{" "}
+                    <code className="font-mono">[Name]: what they said</code>.
+                  </span>
+                )}
+                <span className="text-muted">Scoring against the {callTypeLabel(callType).toLowerCase()} rubric.</span>
+              </span>
+            ) : (
+              "One speaking turn per line."
+            )}
+          </p>
+          <p className={`ml-auto tabular-nums ${overLimit ? "text-red-ink" : "text-muted"}`}>
+            {transcript.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 border-t border-border p-6 sm:grid-cols-2">
@@ -131,10 +166,18 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
           disabled={!transcript.trim() || overLimit || submitting}
           className="pill-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/25 disabled:opacity-35"
         >
-          {submitting ? "Starting…" : "Score this call"}
+          {submitting && (
+            <span
+              className="h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-white/30 border-t-white motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+          )}
+          {submitting ? "Starting the run…" : "Score this call"}
         </button>
         <p className="text-xs text-muted">
-          Scoring takes two to four minutes. You can close the tab — the report keeps its own URL.
+          {unlabelled
+            ? "Without speaker labels the scorer cannot tell coach from client, and the run will fail."
+            : "Scoring takes two to four minutes. You can close the tab: the report keeps its own URL."}
         </p>
         {error && <p className="w-full text-sm text-red-ink">{error}</p>}
       </div>

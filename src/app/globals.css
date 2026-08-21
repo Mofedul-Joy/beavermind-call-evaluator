@@ -73,3 +73,156 @@ body {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* ---------------------------------------------------------------------------
+   Motion
+
+   One authored moment (the gauge sweep) and a small set of supporting states.
+   Durations express distance: feedback is instant, a state change is quick, a
+   layout change gets room, and only the focal sweep is allowed to be slow.
+
+   Every entrance below animates FROM a hidden keyframe INTO the element's own
+   base style, never the other way round. That is what makes them safe: kill the
+   animation (print, reduced motion, no JS) and the base style is the final,
+   fully visible state.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-feedback: 120ms;
+  --dur-state: 200ms;
+  --dur-layout: 320ms;
+  --dur-focal: 1100ms;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes settle-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+}
+
+/* Arrives once the arc has all but landed, so the reader gets the number first
+   and the word for it a beat later. */
+.verdict-late {
+  animation: settle-in 420ms var(--ease-out-expo) 680ms both;
+}
+
+/* Sibling stagger for the dimension list. Twelve rows appearing at once has no
+   rhythm; twelve rows over 200ms reads as one considered movement. The delay is
+   set per row from --i and hard-capped by the cycle in DimensionRow. */
+.stagger-row {
+  animation: rise 300ms var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 18ms);
+}
+
+/* A disclosure that grows from nothing to its own content height. 0fr -> 1fr on
+   a grid row is the only technique for this that works outside Chromium:
+   interpolate-size/calc-size() is Chromium-only as of Aug 2026, and animating
+   height triggers layout on every frame. */
+.disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows var(--dur-layout) var(--ease-out-expo),
+    opacity var(--dur-state) ease;
+  opacity: 0;
+}
+
+.disclosure > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.disclosure[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+/* Keyboard users get a ring on every interactive element, not only the form.
+   Zero specificity, so any component that already styles its own focus wins. */
+:where(a, button, [role="button"], [role="radio"], input, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* The report is rendered to PDF by puppeteer at /print/[id]. Anything mid-flight
+   when it captures would print as a half-drawn arc or a blank section. */
+@media print {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .disclosure {
+    grid-template-rows: 1fr !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Motion here is explanatory, never essential: every state it describes is also
+   carried by the static result, so switching it off loses nothing. The delay
+   reset matters as much as the duration one, or a deferred entrance still sits
+   invisible for two thirds of a second. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* The one loop in the product: the wait screen's arc, tracing the same half-circle
+   the score will land on. Offsets run in SVG user units, so the travel distance is
+   handed in from the component that knows the geometry. */
+@keyframes sweep-arc {
+  from {
+    stroke-dashoffset: var(--sweep-travel);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.sweep {
+  animation: sweep-arc 1600ms cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Start states, held only while a script is on its way.
+   The flag comes from a blocking script in <head>; with JS off these never apply and
+   the server's finished render is what stays on screen. */
+[data-js="on"] [data-gauge-arc="prestart"] {
+  stroke-dashoffset: var(--gauge-full);
+}
+
+[data-js="on"] [data-prestart] {
+  visibility: hidden;
+}
