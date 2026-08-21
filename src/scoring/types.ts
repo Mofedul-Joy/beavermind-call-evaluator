@@ -15,6 +15,8 @@
  *      arithmetic. Same transcript, same numbers, every time.
  */
 
+import type { DeliveryReport } from '../delivery/types'
+
 export type CallType = 'coaching' | 'kickoff'
 
 /** A transcript, split into speaking turns and given stable 1-based line numbers. */
@@ -169,6 +171,18 @@ export type Report = {
  */
 export type RunStatus = 'queued' | 'running' | 'done' | 'failed'
 
+/**
+ * A recording's own lifecycle, independent of the transcript run's.
+ *
+ * `none` — no recording attached; the app is exactly the briefed transcript report.
+ * `processing` — uploaded, worker started, waiting on its callback.
+ * `done` / `failed` — `deliveryReport` or `deliveryError` says which and why.
+ *
+ * Kept separate from `RunStatus` on purpose: delivery analysis is an extension, and a
+ * failure to measure tone must never mark a perfectly good transcript run as failed.
+ */
+export type DeliveryStatus = 'none' | 'processing' | 'done' | 'failed'
+
 export type RunError = {
   /** Stable, so the UI can render a tailored message. */
   code:
@@ -224,6 +238,14 @@ export type Run = {
   createdAt: string
   startedAt: string | null
   finishedAt: string | null
+
+  // ── Delivery analytics (the TONE tab). Additive; all four are inert when no
+  //    recording was attached. The storage path is deliberately NOT exposed — the
+  //    bucket is private and the browser has no business holding an object key.
+  recordingFilename: string | null
+  deliveryStatus: DeliveryStatus
+  deliveryReport: DeliveryReport | null
+  deliveryError: RunError | null
 }
 
 /** The row shape the evaluations list renders. Deliberately small. */

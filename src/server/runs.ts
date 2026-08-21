@@ -8,7 +8,14 @@ import coachingRubric from '../rubric/compiled/coaching.json'
 import kickoffRubric from '../rubric/compiled/kickoff.json'
 import type { CompiledRubric } from '../rubric/types'
 import { AnswerInvalid, buildReport, numberTranscript } from '../scoring/engine'
-import type { CallType, NumberedTranscript, Run, RunError, RunSummary } from '../scoring/types'
+import type {
+  CallType,
+  DeliveryStatus,
+  NumberedTranscript,
+  Run,
+  RunError,
+  RunSummary,
+} from '../scoring/types'
 import { ModelRefused, ModelTruncated, scoreTranscript } from '../lib/anthropic'
 import { supabaseAdmin } from '../lib/supabase'
 
@@ -151,7 +158,7 @@ function toRunError(err: unknown): RunError {
 // ── Reads ────────────────────────────────────────────────────────────────────
 
 const RUN_COLUMNS =
-  'id, call_type, status, coach_name, client_name, rubric_hash, transcript, report, error, cost, is_sample, created_at, started_at, finished_at'
+  'id, call_type, status, coach_name, client_name, rubric_hash, transcript, report, error, cost, is_sample, created_at, started_at, finished_at, recording_filename, delivery_status, delivery_report, delivery_error'
 
 function rowToRun(row: Record<string, unknown>): Run {
   return {
@@ -169,6 +176,10 @@ function rowToRun(row: Record<string, unknown>): Run {
     createdAt: row.created_at as string,
     startedAt: (row.started_at as string | null) ?? null,
     finishedAt: (row.finished_at as string | null) ?? null,
+    recordingFilename: (row.recording_filename as string | null) ?? null,
+    deliveryStatus: (row.delivery_status as DeliveryStatus | null) ?? 'none',
+    deliveryReport: (row.delivery_report as Run['deliveryReport']) ?? null,
+    deliveryError: (row.delivery_error as Run['deliveryError']) ?? null,
   }
 }
 

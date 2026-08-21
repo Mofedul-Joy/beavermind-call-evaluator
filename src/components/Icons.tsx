@@ -59,5 +59,21 @@ export const Flag = (p: { size?: number; className?: string }) => (
 export const ArrowRight = (p: { size?: number; className?: string }) => (
   <Icon {...p}>
     <path d="M3.5 8h9M9 4.5 12.5 8 9 11.5" />
+export const Upload = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M8 10.5v-7M5 6 8 3l3 3M3 12.5h10" />
+  </Icon>
+);
+
+export const FileIcon = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M4.5 2h4l3 3v8.5a.5.5 0 0 1-.5.5h-6.5a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5Z" />
+    <path d="M8.5 2v3h3" />
+  </Icon>
+);
+
+export const X = (p: { size?: number; className?: string }) => (
+  <Icon {...p}>
+    <path d="M4 4l8 8M12 4l-8 8" />
   </Icon>
 );
