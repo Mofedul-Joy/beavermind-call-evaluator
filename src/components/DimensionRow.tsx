@@ -4,21 +4,7 @@ import { useState } from "react";
 import type { AppliedCap, DimensionResult } from "@/scoring/types";
 import { EvidenceQuotes } from "./EvidenceQuotes";
 import { ScorePill } from "./BandChip";
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      className={`shrink-0 text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}
-      aria-hidden="true"
-    >
-      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+import { Chevron } from "./Icons";
 
 export function DimensionRow({
   dim,
@@ -43,7 +29,7 @@ export function DimensionRow({
         aria-controls={panelId}
         disabled={forceOpen}
         onClick={() => setOpenState((v) => !v)}
-        className="flex w-full items-start gap-4 py-4 text-left disabled:cursor-default"
+        className="group flex w-full items-start gap-4 px-5 py-4 text-left transition-colors hover:bg-black/[.015] disabled:cursor-default disabled:hover:bg-transparent"
       >
         <span className="micro-label mt-0.5 w-6 shrink-0 tabular-nums">{String(dim.n).padStart(2, "0")}</span>
         <span className="flex-1">
@@ -74,7 +60,7 @@ export function DimensionRow({
       </button>
 
       {open && (
-        <div id={panelId} className="space-y-4 pb-5 pl-10">
+        <div id={panelId} className="space-y-4 px-5 pb-5 pl-[3.75rem]">
           {dim.status === "not_evidenced" && (
             <div className="rounded-lg bg-black/[.03] px-4 py-3 text-sm text-body">
               <span className="font-medium text-ink">Not scored — deliberately.</span>{" "}
@@ -101,7 +87,7 @@ export function DimensionRow({
             </div>
           )}
 
-          <EvidenceQuotes evidence={dim.evidence} />
+          <EvidenceQuotes evidence={dim.evidence} initial={3} showAll={forceOpen} />
 
           {dim.quickFix && (
             <div className="space-y-1">

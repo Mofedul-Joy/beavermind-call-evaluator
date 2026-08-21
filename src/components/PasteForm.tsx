@@ -50,10 +50,18 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
     setCallType(sample.callType);
   }
 
+  const field =
+    "w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink transition-colors " +
+    "placeholder:text-muted focus:border-ink/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/10";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2" role="radiogroup" aria-label="Call type">
+    /* One card, hairline-divided into groups. The fields were previously loose on the page
+       ground with a native <select> among them, which renders as the operating system's
+       control and reads as a different product from everything beside it. */
+    <form onSubmit={handleSubmit} className="card overflow-hidden">
+      <fieldset className="p-6">
+        <legend className="micro-label float-left mb-3 w-full">Which rubric</legend>
+        <div className="flex gap-2 pt-1" role="radiogroup" aria-label="Call type">
           {(["kickoff", "coaching"] as const).map((t) => (
             <button
               key={t}
@@ -61,81 +69,75 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
               role="radio"
               aria-checked={callType === t}
               onClick={() => setCallType(t)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                callType === t ? "bg-ink text-white" : "bg-white text-body border border-border"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                callType === t ? "bg-ink text-white" : "border border-border bg-white text-body hover:border-ink/25"
               }`}
             >
               {callTypeLabel(t)}
             </button>
           ))}
         </div>
+      </fieldset>
 
-        {samples.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted">Load a sample transcript:</span>
-            <select
-              defaultValue=""
-              onChange={(e) => {
-                const sample = samples.find((s) => s.id === e.target.value);
-                if (sample) loadSample(sample);
-                e.target.value = "";
-              }}
-              className="rounded-full border border-border bg-white px-3 py-1.5 text-sm text-ink"
-            >
-              <option value="" disabled>
-                Choose one…
-              </option>
-              {samples.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+      {samples.length > 0 && (
+        <div className="space-y-3 border-t border-border px-6 py-5">
+          <p className="micro-label">Or start from a sample</p>
+          <div className="flex flex-wrap gap-2">
+            {samples.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => loadSample(s)}
+                className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-body transition-colors hover:border-ink/25 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+              >
+                {s.label}
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div>
+      <div className="border-t border-border p-6">
+        <label className="micro-label" htmlFor="transcript">
+          Transcript
+        </label>
         <textarea
+          id="transcript"
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
           placeholder="Paste the call transcript here, one speaking turn per line…"
-          rows={16}
-          className="scroll-x w-full resize-y rounded-xl border border-border bg-white px-4 py-3.5 text-sm leading-relaxed text-ink placeholder:text-muted focus:border-ink/40 focus:outline-none"
+          rows={14}
+          className={`scroll-x mt-2 resize-y leading-relaxed ${field}`}
         />
-        <p className={`mt-1.5 text-right text-xs tabular-nums ${overLimit ? "text-red-ink" : "text-muted"}`}>
+        <p className={`mt-2 text-right text-xs tabular-nums ${overLimit ? "text-red-ink" : "text-muted"}`}>
           {transcript.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 border-t border-border p-6 sm:grid-cols-2">
         <label className="block">
           <span className="micro-label">Client (optional)</span>
-          <input
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink focus:border-ink/40 focus:outline-none"
-          />
+          <input value={clientName} onChange={(e) => setClientName(e.target.value)} className={`mt-2 ${field}`} />
         </label>
         <label className="block">
           <span className="micro-label">Coach (optional)</span>
-          <input
-            value={coachName}
-            onChange={(e) => setCoachName(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink focus:border-ink/40 focus:outline-none"
-          />
+          <input value={coachName} onChange={(e) => setCoachName(e.target.value)} className={`mt-2 ${field}`} />
         </label>
       </div>
 
-      {error && <p className="text-sm text-red-ink">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={!transcript.trim() || overLimit || submitting}
-        className="pill-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium hover:opacity-85 disabled:opacity-40"
-      >
-        {submitting ? "Starting…" : "Score this call"}
-      </button>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-black/[.015] px-6 py-5">
+        <button
+          type="submit"
+          disabled={!transcript.trim() || overLimit || submitting}
+          className="pill-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/25 disabled:opacity-35"
+        >
+          {submitting ? "Starting…" : "Score this call"}
+        </button>
+        <p className="text-xs text-muted">
+          Scoring takes two to four minutes. You can close the tab — the report keeps its own URL.
+        </p>
+        {error && <p className="w-full text-sm text-red-ink">{error}</p>}
+      </div>
     </form>
   );
 }

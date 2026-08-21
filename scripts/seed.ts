@@ -54,6 +54,12 @@ async function main() {
       .insert({
         call_type: callType,
         status: 'done',
+        // Derived, not hardcoded. In all four transcripts the coach speaks first — they
+        // open the call — so speaker order gives the labels without a lookup table that
+        // would silently rot if the samples were ever swapped. Without these the list
+        // showed four rows reading "Untitled", which is the first thing anyone sees.
+        coach_name: transcript.speakers[0] ?? null,
+        client_name: transcript.speakers[1] ?? null,
         rubric_hash: rubric.sourceHash,
         transcript,
         report,

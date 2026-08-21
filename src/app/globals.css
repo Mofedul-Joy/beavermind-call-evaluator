@@ -6,12 +6,16 @@
   --color-border: #eae8e3;
   --color-ink: #111111;
   --color-body: #57534e;
-  --color-muted: #8a8680;
+  /* Both of these were set by eye and failed WCAG AA for small text: the old muted
+     #8a8680 measured 3.32:1 on the page ground and carries every micro-label, timestamp
+     and disclosure on the site. Darkened until each clears 4.5:1 against the surface it
+     actually sits on, keeping the warm hue. */
+  --color-muted: #73706b;
 
   --color-green-bg: #eef6ee;
   --color-green-ink: #1e7d34;
   --color-amber-bg: #fbf1e2;
-  --color-amber-ink: #b3690a;
+  --color-amber-ink: #a15e09;
   --color-red-bg: #fbeaea;
   --color-red-ink: #c22b2b;
 }

@@ -40,9 +40,9 @@ export function RunPageClient({ initialRun }: { initialRun: Run }) {
   }, [run.status, run.id]);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
       <RunHeader run={run} />
-      <div className="mt-8">
+      <div className="mt-10">
         {run.status === "done" && run.report && <ReportView report={run.report} />}
         {(run.status === "queued" || run.status === "running") && <RunRunning />}
         {run.status === "failed" && run.error && <RunFailed error={run.error} />}
