@@ -9,7 +9,8 @@
     "lint": "eslint",
     "compile:rubrics": "tsx scripts/compile-rubrics.ts",
     "test": "tsx --test src/scoring/*.test.ts",
-    "fixtures": "tsx scripts/make-fixtures.ts"
+    "fixtures": "tsx scripts/make-fixtures.ts",
+    "test:delivery": "python3 delivery/test_metrics.py"
   },
   "dependencies": {
     "next": "16.3.2",
