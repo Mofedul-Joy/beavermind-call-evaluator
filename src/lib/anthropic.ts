@@ -53,7 +53,12 @@ export async function scoreTranscript(
   let thinkingTokens: number | null = null
 
   const call = async (): Promise<Anthropic.Message> => {
-    const response = await client().messages.create({
+    // Streamed, then collected. Not for progressive rendering — nothing watches this, the
+    // operator has closed the tab — but because the SDK refuses a non-streaming request
+    // whose worst-case duration could exceed ten minutes, and it estimates that from
+    // max_tokens. Raising the cap enough to stop truncating tripped that guard, so the two
+    // are linked: you cannot have the headroom without streaming for it.
+    const response = await client().messages.stream({
       model,
       // Reasoning tokens count toward this cap, and reasoning is most of the output on
       // these transcripts. kickoff-02 was measured at 16,561 output tokens against a
@@ -73,7 +78,7 @@ export async function scoreTranscript(
           ? { effort: process.env.ANTHROPIC_EFFORT as 'low' | 'medium' | 'high' | 'xhigh' | 'max' }
           : {}),
       },
-    })
+    }).finalMessage()
 
     inputTokens += response.usage.input_tokens + (response.usage.cache_creation_input_tokens ?? 0)
     cachedInputTokens += response.usage.cache_read_input_tokens ?? 0
