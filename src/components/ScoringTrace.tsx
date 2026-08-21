@@ -8,6 +8,15 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
   const [openState, setOpenState] = useState(forceOpen);
   const open = forceOpen || openState;
 
+  // Reports are stored as jsonb and a run URL has to still work next week, so a report
+  // written by an older engine will not carry fields added since. TypeScript says these
+  // are required because they always are on a NEW report; it cannot speak for rows already
+  // in the database. Reading them defensively is the difference between an old permalink
+  // rendering and an old permalink 500ing.
+  const ceilingAdjustments = trace.ceilingAdjustments ?? [];
+  const capsApplied = trace.capsApplied ?? [];
+  const excluded = trace.excluded ?? [];
+
   return (
     <div className="card">
       <button
@@ -31,11 +40,11 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
             <TraceStat label="Final" value={`${trace.normalised}/100`} />
           </div>
 
-          {trace.excluded.length > 0 && (
+          {excluded.length > 0 && (
             <div>
               <p className="micro-label mb-1.5">Excluded dimensions</p>
               <ul className="space-y-1 text-body">
-                {trace.excluded.map((ex) => (
+                {excluded.map((ex) => (
                   <li key={ex.n}>
                     D{ex.n} {ex.title} (max {ex.max}) — {ex.reason}
                   </li>
@@ -44,7 +53,7 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
             </div>
           )}
 
-          {trace.ceilingAdjustments.length > 0 && (
+          {ceilingAdjustments.length > 0 && (
             <div className="space-y-3">
               <p className="micro-label">Taken off maximum</p>
               <p className="text-body">
@@ -52,7 +61,7 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
                 better. A quick fix completes &ldquo;to reach the maximum&rdquo;, so those two cannot both be
                 true. Resolved toward the criticism.
               </p>
-              {trace.ceilingAdjustments.map((adj) => (
+              {ceilingAdjustments.map((adj) => (
                 <div key={adj.n} className="rounded-lg bg-black/[.03] px-4 py-3">
                   <p className="font-medium text-ink">
                     D{adj.n} {adj.title}: {adj.from} → {adj.to}
@@ -63,10 +72,10 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
             </div>
           )}
 
-          {trace.capsApplied.length > 0 && (
+          {capsApplied.length > 0 && (
             <div className="space-y-3">
               <p className="micro-label">Caps applied</p>
-              {trace.capsApplied.map((cap) => (
+              {capsApplied.map((cap) => (
                 <div key={cap.capId} className="rounded-lg bg-amber-bg px-4 py-3">
                   <p className="font-medium text-amber-ink">{cap.change}</p>
                   <p className="mt-1 text-body">{cap.condition}</p>
