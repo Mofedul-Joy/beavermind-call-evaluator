@@ -55,7 +55,12 @@ export async function scoreTranscript(
   const call = async (): Promise<Anthropic.Message> => {
     const response = await client().messages.create({
       model,
-      max_tokens: 16000,
+      // Reasoning tokens count toward this cap, and reasoning is most of the output on
+      // these transcripts. kickoff-02 was measured at 16,561 output tokens against a
+      // 16,000 ceiling, so the longest of the client's four calls was already truncating
+      // on a coin flip — it passed locally and failed on the first production run. The
+      // cap is a ceiling, not a reservation: raising it costs nothing unless used.
+      max_tokens: 32000,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages,
       output_config: {
