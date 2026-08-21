@@ -29,6 +29,17 @@ const FILES: { file: string; callType: CallType }[] = [
 async function main() {
   const db = supabaseAdmin()
 
+  // Idempotent: clear the previous samples first. Without this, re-seeding after an engine
+  // change leaves the old scores sitting in the list next to the new ones, which is worse
+  // than either — two runs of the same call showing different numbers with nothing saying
+  // why. Only `is_sample` rows are touched; real runs are never deleted.
+  const { error: clearError, count } = await db
+    .from('runs')
+    .delete({ count: 'exact' })
+    .eq('is_sample', true)
+  if (clearError) throw clearError
+  console.log(`cleared ${count ?? 0} previous sample run(s)`)
+
   for (const { file, callType } of FILES) {
     const raw = readFileSync(join(ROOT, 'transcripts', file), 'utf8')
     const rubric = RUBRICS[callType]
