@@ -16,12 +16,14 @@ export function formatUsd(usd: number): string {
 const UTC = "UTC";
 
 export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+  const formatted = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: UTC,
-    timeZoneName: "short",
   }).format(new Date(iso));
+  /* Appended rather than asked for as `timeZoneName`, because Intl rejects that
+     option alongside dateStyle/timeStyle and throws at format time. */
+  return `${formatted} UTC`;
 }
 
 export function formatDateShort(iso: string): string {
