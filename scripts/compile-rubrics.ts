@@ -333,8 +333,9 @@ function assertSound(r: CompiledRubric) {
   if (!r.caps.length) fail('no caps parsed')
   r.caps.forEach((c) => {
     if ('dimension' in c.effect) {
-      const d = r.dimensions.find((x) => x.n === c.effect.dimension)
-      if (!d) fail(`cap "${c.id}" targets D${(c.effect as { dimension: number }).dimension}, which does not exist`)
+      const targetDimension = c.effect.dimension
+      const d = r.dimensions.find((x) => x.n === targetDimension)
+      if (!d) fail(`cap "${c.id}" targets D${targetDimension}, which does not exist`)
       else if (c.effect.value > d.max) fail(`cap "${c.id}" caps D${d.n} at ${c.effect.value}, above its max ${d.max}`)
     }
   })
