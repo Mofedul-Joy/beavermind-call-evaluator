@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { RunSummary } from "@/scoring/types";
-import { callTypeLabel, formatDate, formatUsd } from "@/lib/format";
+import { callTypeLabel, formatDateShort, formatUsd } from "@/lib/format";
 import { FilterPill } from "./Pill";
 import { BandChip } from "./BandChip";
 import { ArrowRight } from "./Icons";
@@ -45,12 +45,47 @@ export function EvaluationsTable({ runs }: { runs: RunSummary[] }) {
         </FilterPill>
       </div>
 
-      <div className="card scroll-x">
+      {/* Six columns do not fit a phone. The table used to scroll sideways inside its
+          card, which put SCORE — the one column anybody scans this page for — off the
+          right edge with nothing indicating it was there. Below `sm` the same rows
+          render as cards with the score on the first line; the table is for widths
+          that can actually hold it. */}
+      <ul className="card divide-y divide-border sm:hidden">
+        {filtered.length === 0 && <EmptyFilter filter={filter} counts={counts} onShowAll={() => setFilter("all")} />}
+        {filtered.map((run) => (
+          <li key={run.id}>
+            <Link
+              href={`/runs/${run.id}`}
+              className="group flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-black/[.015]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-ink">{run.clientName ?? "Untitled"}</span>
+                  {run.isSample && (
+                    <span className="mt-1 inline-flex rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-body">
+                      Sample
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0">
+                  <ScoreCell run={run} />
+                </span>
+              </div>
+              <p className="text-xs text-muted">
+                {run.coachName ?? "No coach"} · {callTypeLabel(run.callType)} call ·{" "}
+                {run.costUsd !== null ? formatUsd(run.costUsd) : "cost unknown"} · {formatDateShort(run.createdAt)}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <div className="card scroll-x max-sm:hidden">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border">
               {["Client", "Coach", "Type", "Score", "Cost", "When"].map((h) => (
-                <th key={h} className="micro-label px-5 py-3 text-left font-semibold">
+                <th key={h} className="micro-label px-4 py-3 text-left font-semibold">
                   {h}
                 </th>
               ))}
@@ -60,15 +95,8 @@ export function EvaluationsTable({ runs }: { runs: RunSummary[] }) {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted">
-                  No {FILTER_LABEL[filter as Exclude<Filter, "all">]} calls scored yet.{" "}
-                  <button
-                    type="button"
-                    onClick={() => setFilter("all")}
-                    className="font-medium text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-ink"
-                  >
-                    Show all {counts.all}
-                  </button>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted">
+                  <EmptyFilterMessage filter={filter} total={counts.all} onShowAll={() => setFilter("all")} />
                 </td>
               </tr>
             )}
@@ -81,7 +109,7 @@ export function EvaluationsTable({ runs }: { runs: RunSummary[] }) {
                 key={run.id}
                 className="group border-b border-border transition-colors last:border-b-0 hover:bg-black/[.015] focus-within:bg-black/[.015]"
               >
-                <td className="px-5 py-3.5 whitespace-nowrap">
+                <td className="px-4 py-3.5 whitespace-nowrap">
                   <Link
                     href={`/runs/${run.id}`}
                     className="font-medium text-ink decoration-border underline-offset-4 transition-colors group-hover:underline group-hover:decoration-ink"
@@ -89,21 +117,21 @@ export function EvaluationsTable({ runs }: { runs: RunSummary[] }) {
                     {run.clientName ?? "Untitled"}
                   </Link>
                   {run.isSample && (
-                    <span className="ml-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted">
+                    <span className="ml-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-body">
                       Sample
                     </span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-body">{run.coachName ?? "—"}</td>
-                <td className="px-5 py-3.5 text-body">{callTypeLabel(run.callType)}</td>
-                <td className="px-5 py-3.5">
+                <td className="px-4 py-3.5 whitespace-nowrap text-body">{run.coachName ?? "—"}</td>
+                <td className="px-4 py-3.5 text-body">{callTypeLabel(run.callType)}</td>
+                <td className="px-4 py-3.5">
                   <ScoreCell run={run} />
                 </td>
-                <td className="px-5 py-3.5 tabular-nums text-body">
+                <td className="px-4 py-3.5 tabular-nums text-body">
                   {run.costUsd !== null ? formatUsd(run.costUsd) : "—"}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-body">{formatDate(run.createdAt)}</td>
-                <td className="pr-5 text-right align-middle">
+                <td className="px-4 py-3.5 whitespace-nowrap text-body">{formatDateShort(run.createdAt)}</td>
+                <td className="pr-4 text-right align-middle">
                   <ArrowRight
                     size={14}
                     className="ml-auto -translate-x-1.5 text-muted opacity-0 transition duration-[var(--dur-state)] ease-[var(--ease-out-expo)] group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:translate-x-0 group-focus-within:opacity-100"
@@ -115,6 +143,45 @@ export function EvaluationsTable({ runs }: { runs: RunSummary[] }) {
         </table>
       </div>
     </div>
+  );
+}
+
+function EmptyFilterMessage({
+  filter,
+  total,
+  onShowAll,
+}: {
+  filter: Filter;
+  total: number;
+  onShowAll: () => void;
+}) {
+  return (
+    <>
+      No {FILTER_LABEL[filter as Exclude<Filter, "all">]} calls scored yet.{" "}
+      <button
+        type="button"
+        onClick={onShowAll}
+        className="font-medium text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-ink"
+      >
+        Show all {total}
+      </button>
+    </>
+  );
+}
+
+function EmptyFilter({
+  filter,
+  counts,
+  onShowAll,
+}: {
+  filter: Filter;
+  counts: { all: number };
+  onShowAll: () => void;
+}) {
+  return (
+    <li className="px-5 py-10 text-center text-sm text-muted">
+      <EmptyFilterMessage filter={filter} total={counts.all} onShowAll={onShowAll} />
+    </li>
   );
 }
 

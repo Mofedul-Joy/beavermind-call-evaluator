@@ -44,11 +44,13 @@ export function ReportTabs({ run, onRun }: { run: Run; onRun?: (run: Run) => voi
           the top. */}
       {!hasRecording && (
         <section>
-          <div className="mb-3 flex items-baseline justify-between gap-4">
+          {/* Same section rule as every other label on the report, so this reads as one
+              more part of the page rather than something bolted under it. */}
+          <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
             <h2 className="micro-label">Delivery analysis</h2>
             <p className="text-xs text-muted">Optional</p>
           </div>
-          <p className="mb-4 max-w-[68ch] text-sm leading-relaxed text-body">
+          <p className="mb-5 max-w-[58ch] text-sm leading-relaxed text-body">
             The rubric only sees words. Attach the call recording and the vocal delivery behind
             them gets measured too: talk ratio, pace, pauses, interruptions, pitch and energy
             variance, each against a published benchmark.

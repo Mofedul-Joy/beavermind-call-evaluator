@@ -10,7 +10,7 @@ export default async function PrintPage({ params }: PageProps<"/print/[id]">) {
   if (!run) notFound();
 
   return (
-    <div className="text-[#111111]" style={{ fontFamily: "GeistPDF, ui-sans-serif, system-ui, sans-serif" }}>
+    <div className="text-[#111111]" style={{ fontFamily: "SwitzerPDF, ui-sans-serif, system-ui, sans-serif" }}>
       <style
         dangerouslySetInnerHTML={{
           __html: `

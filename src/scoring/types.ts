@@ -30,6 +30,9 @@ export type NumberedTranscript = {
 
 // ── What the model returns ────────────────────────────────────────────────────
 
+/** One titled beat of a dimension's reasoning. Rendered as a titled point in the report. */
+export type RationalePoint = { title: string; body: string }
+
 /**
  * The model's answer for one dimension.
  *
@@ -51,6 +54,14 @@ export type ModelDimensionAnswer = {
   score: number | null
   /** Starts "Scored X/Y because …", matching the client's own report convention. */
   rationale: string
+  /**
+   * The same reasoning as `rationale`, restated as 2–4 discrete titled beats. Required by
+   * the JSON schema and optional here: reports written by an older engine and stored as
+   * jsonb have no `points`, and those permalinks must still parse and still render.
+   * Empty from the model when status is not `scored`; the engine drops it — see
+   * `sanitisePoints` in `engine.ts`.
+   */
+  points?: RationalePoint[]
   /** 1-based transcript line numbers. Empty is only valid when status is not `scored`. */
   evidence: number[]
   /** "To reach {max}: …". Absent when the dimension is disabled. */
@@ -71,9 +82,18 @@ export type ModelCapFinding = {
 
 /** The complete structured answer. This is what the JSON schema sent to the model shapes. */
 export type ModelAnswer = {
-  /** The single change that moves the number most. Rendered as the report's hero quote. */
-  theOneThing: { change: string; wouldScore: number; evidence: number[] }
-  /** A few sentences on how the call went, addressed to the coach. */
+  /**
+   * The single change that moves the number most. Rendered as the report's hero quote.
+   *
+   * `change` is the headline: one short imperative sentence, no parentheticals, no line
+   * citations. `detail` carries the specifics, examples and citations underneath it —
+   * optional here for the same jsonb reason as `points`, required in the JSON schema.
+   */
+  theOneThing: { change: string; detail?: string; wouldScore: number; evidence: number[] }
+  /**
+   * How the call went, addressed to the coach. Two or three short paragraphs separated by
+   * a blank line (`\n\n`). Old reports have no blank line and render as one paragraph.
+   */
   brief: string
   redFlags: { title: string; why: string; evidence: number[] }[]
   dimensions: ModelDimensionAnswer[]
@@ -108,6 +128,8 @@ export type DimensionResult = {
   rawScore: number | null
   bucketLabel: string | null
   rationale: string
+  /** Present only when the scorer produced a usable set of beats. See `sanitisePoints`. */
+  points?: RationalePoint[]
   evidence: Evidence[]
   quickFix: string | null
   statusReason?: string
@@ -154,7 +176,7 @@ export type ScoreTrace = {
 }
 
 export type Report = {
-  theOneThing: { change: string; wouldScore: number; evidence: Evidence[] }
+  theOneThing: { change: string; detail?: string; wouldScore: number; evidence: Evidence[] }
   brief: string
   redFlags: { title: string; why: string; evidence: Evidence[] }[]
   dimensions: DimensionResult[]

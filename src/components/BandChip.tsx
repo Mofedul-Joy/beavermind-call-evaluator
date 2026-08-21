@@ -14,7 +14,7 @@ export function BandChip({ band }: { band: string }) {
 export function ScorePill({ score, max }: { score: number | null; max: number }) {
   if (score === null) {
     return (
-      <span className="inline-flex items-center rounded-full bg-black/5 px-2.5 py-0.5 text-xs font-medium text-muted">
+      <span className="inline-flex items-center rounded-full bg-black/5 px-2.5 py-0.5 text-xs font-medium text-body">
         —
       </span>
     );

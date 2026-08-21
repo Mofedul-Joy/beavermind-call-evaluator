@@ -103,6 +103,28 @@ export function buildSystemPrompt(rubric: CompiledRubric): string {
       '  printed in that dimension\'s scoring table below, nothing else.',
     ].join('\n'),
 
+    [
+      'Shape of the writing:',
+      '- Every dimension returns "points" alongside "rationale": the same reasoning restated as discrete titled',
+      '  beats. Give 2 to 4 points for a scored dimension — never 1, never 5 or more.',
+      '- A point\'s "title" is a 3-to-6-word noun phrase naming the specific behaviour, e.g. "Names the phase',
+      '  target", "Reflects back a full synthesis", "No live movement occurred". Sentence case, no trailing full',
+      '  stop.',
+      '- A point\'s "body" is one or two sentences carrying the specifics and the line citations, in the same voice',
+      '  as the rationale. Line citations keep the (L121-123) form used everywhere else.',
+      '- Together the points must say everything the rationale says. Write the rationale exactly as you would',
+      '  have anyway, still starting "Scored X/Y because …" — the points are that same reasoning broken into',
+      '  beats, not extra content and not a summary of it.',
+      '- When status is "not_evidenced" or "disabled", return an empty array for "points".',
+      '- theOneThing.change is a headline: ONE short imperative sentence, at most 18 words, no parentheticals and',
+      '  no line citations. The right size is "Tighten pacing so tangents don\'t fracture the accountability',
+      '  section."',
+      '- theOneThing.detail carries everything that will not fit in that headline — the specifics, the examples,',
+      '  the line citations. One to three sentences.',
+      '- "brief" is two or three short paragraphs separated by a blank line (\\n\\n), each 2 to 3 sentences with',
+      '  its own job: what went well, then where it slipped, then what that means for the next call.',
+    ].join('\n'),
+
     ['Preamble:', ...rubric.preamble].join('\n'),
     ['Principles:', ...rubric.principles].join('\n'),
   ]

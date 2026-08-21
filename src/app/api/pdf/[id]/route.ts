@@ -3,6 +3,7 @@ import chromium from "@sparticuz/chromium";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { headers } from "next/headers";
 import { getRun } from "@/lib/client-data";
+import { pdfFilename } from "@/lib/format";
 
 export const maxDuration = 60;
 
@@ -53,10 +54,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       preferCSSPageSize: true,
     });
 
+    /* `attachment`, not `inline`. This endpoint exists to hand somebody a file, and
+       `inline` makes the browser navigate to its own PDF viewer instead — the reader
+       loses the report they were reading to look at a picture of it. The button that
+       calls this fetches the body and saves the blob, so in practice nothing navigates
+       either way; the header is what makes a pasted URL behave the same. */
     return new NextResponse(Buffer.from(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${(run.clientName ?? "evaluation").replace(/[^a-z0-9]+/gi, "-")}-report.pdf"`,
+        "Content-Disposition": `attachment; filename="${pdfFilename(run.clientName)}"`,
       },
     });
   } finally {

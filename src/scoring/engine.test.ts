@@ -11,7 +11,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { CompiledRubric } from '../rubric/types'
-import type { ModelAnswer, ModelDimensionAnswer } from './types'
+import type { ModelAnswer, ModelDimensionAnswer, RationalePoint } from './types'
 import { AnswerInvalid, allowedScores, buildReport, numberTranscript, renderForModel, validateAnswer } from './engine'
 
 const load = (id: 'coaching' | 'kickoff'): CompiledRubric =>
@@ -316,5 +316,82 @@ describe('buildReport', () => {
     const r = buildReport(baseAnswer(coaching, 'floor'), coaching, t)
     assert.equal(r.trace.normalised, 0)
     assert.equal(r.trace.band.name, 'FAIL')
+  })
+})
+
+describe('rationale points', () => {
+  const t = numberTranscript(TRANSCRIPT)
+
+  const twoPoints: RationalePoint[] = [
+    { title: 'Opens with a check-in', body: 'Asks how the knee feels before anything else (L3).' },
+    { title: 'No live movement occurred', body: 'Nothing in the call shows a correction being coached (L5).' },
+  ]
+
+  test('a well-formed set of points survives onto the report', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].points = twoPoints
+    const r = buildReport(a, coaching, t)
+    assert.deepEqual(r.dimensions[0].points, twoPoints)
+  })
+
+  test('a single point is dropped, so the rationale paragraph still renders', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].points = [twoPoints[0]]
+    assert.equal(buildReport(a, coaching, t).dimensions[0].points, undefined)
+  })
+
+  test('points with an empty title or body are filtered out', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].points = [...twoPoints, { title: '  ', body: 'Orphaned body.' }, { title: 'Orphaned title', body: '' }]
+    const r = buildReport(a, coaching, t)
+    assert.deepEqual(r.dimensions[0].points, twoPoints, 'only the two complete beats survive')
+  })
+
+  test('filtering below two points drops the array entirely', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].points = [twoPoints[0], { title: 'Orphaned title', body: '   ' }]
+    assert.equal(buildReport(a, coaching, t).dimensions[0].points, undefined)
+  })
+
+  test('titles and bodies are trimmed', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].points = twoPoints.map((p) => ({ title: `  ${p.title} `, body: `\t${p.body}  ` }))
+    assert.deepEqual(buildReport(a, coaching, t).dimensions[0].points, twoPoints)
+  })
+
+  test('points are dropped on a not_evidenced dimension', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.dimensions[0].status = 'not_evidenced'
+    a.dimensions[0].evidence = []
+    a.dimensions[0].statusReason = 'No check-in appears in the transcript.'
+    a.dimensions[0].points = twoPoints
+    assert.equal(buildReport(a, coaching, t).dimensions[0].points, undefined, 'nothing was scored to break into beats')
+  })
+
+  test('an answer with no points at all still builds — old jsonb rows have none', () => {
+    assert.equal(buildReport(baseAnswer(coaching, 'top'), coaching, t).dimensions[0].points, undefined)
+  })
+})
+
+describe('theOneThing.detail', () => {
+  const t = numberTranscript(TRANSCRIPT)
+
+  test('detail is carried through, trimmed', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.theOneThing.detail = '  He named the block but never tied it to the 12-month goal (L3).  '
+    assert.equal(
+      buildReport(a, coaching, t).theOneThing.detail,
+      'He named the block but never tied it to the 12-month goal (L3).',
+    )
+  })
+
+  test('a whitespace-only detail becomes undefined rather than an empty paragraph', () => {
+    const a = baseAnswer(coaching, 'top')
+    a.theOneThing.detail = '   '
+    assert.equal(buildReport(a, coaching, t).theOneThing.detail, undefined)
+  })
+
+  test('an answer with no detail still builds', () => {
+    assert.equal(buildReport(baseAnswer(coaching, 'top'), coaching, t).theOneThing.detail, undefined)
   })
 })

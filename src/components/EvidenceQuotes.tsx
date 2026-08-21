@@ -13,6 +13,9 @@ import type { Evidence } from "@/scoring/types";
  * finding, and three findings citing overlapping lines will bury the page in repeated
  * transcript before the reader reaches a single score. Two lines carry the point; the
  * rest are one click away and always countable, so nothing is hidden, only deferred.
+ *
+ * `initial={0}` defers all of them, for the one place — the hero — where even two
+ * verbatim turns are eight lines of italic standing between the reader and the report.
  */
 export function EvidenceQuotes({
   evidence,
@@ -31,23 +34,32 @@ export function EvidenceQuotes({
   const hidden = evidence.length - shown.length;
 
   return (
-    <div className="space-y-2">
-      <p className="micro-label">Evidence</p>
-      <ul className="space-y-2 border-l border-border pl-4">
-        {shown.map((e) => (
-          <li key={e.line} className="text-sm italic leading-relaxed text-body">
-            <span className="mr-1.5 text-xs font-medium tabular-nums not-italic text-muted">L{e.line}</span>
-            <span className="font-medium not-italic text-ink">{e.speaker}:</span> &ldquo;{e.text}&rdquo;
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-2.5">
+      {shown.length > 0 && (
+        <>
+          <p className="micro-label">Evidence</p>
+          <ul className="space-y-2.5 border-l border-border pl-4">
+            {shown.map((e) => (
+              <li key={e.line} className="text-sm italic leading-relaxed text-body">
+                <span className="mr-1.5 text-xs font-medium tabular-nums not-italic text-muted">L{e.line}</span>
+                <span className="font-medium not-italic text-ink">{e.speaker}:</span> &ldquo;{e.text}&rdquo;
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       {!showAll && (hidden > 0 || expanded) && (
         <button
           type="button"
+          aria-expanded={open}
           onClick={() => setExpanded((v) => !v)}
           className="text-xs font-medium text-muted underline decoration-border underline-offset-4 transition-colors hover:text-ink"
         >
-          {hidden > 0 ? `Show ${hidden} more line${hidden === 1 ? "" : "s"}` : "Show fewer"}
+          {hidden === 0
+            ? "Hide the transcript"
+            : shown.length === 0
+              ? `Show the ${hidden} line${hidden === 1 ? "" : "s"} this rests on`
+              : `Show ${hidden} more line${hidden === 1 ? "" : "s"}`}
         </button>
       )}
     </div>

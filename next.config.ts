@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
    */
   outputFileTracingIncludes: {
     "/api/pdf/\\[id\\]": ["./node_modules/@sparticuz/chromium/bin/**/*"],
+    /**
+     * The print page base64-embeds the typefaces into its own <style> so the headless
+     * browser has them synchronously. It reads them off disk at request time from
+     * `src/assets/fonts`, which is source, not a bundled asset — nothing about
+     * next/font/local puts them in the serverless output, and a font missing there
+     * fails the way everything about this route fails: a 200 and a PDF set in
+     * Chromium's default face, with no error anywhere.
+     */
+    "/print/\\[id\\]": ["./src/assets/fonts/**/*"],
   },
 };
 

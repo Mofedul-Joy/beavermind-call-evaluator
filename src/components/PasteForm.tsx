@@ -68,9 +68,14 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
        ground with a native <select> among them, which renders as the operating system's
        control and reads as a different product from everything beside it. */
     <form onSubmit={handleSubmit} className="card overflow-hidden">
-      <fieldset className="p-6">
-        <legend className="micro-label float-left mb-3 w-full">Which rubric</legend>
-        <div className="flex gap-2 pt-1" role="radiogroup" aria-label="Call type">
+      <div className="p-6">
+        {/* Not a <legend>. A legend is laid out by the fieldset, not by normal flow, and
+            the float-and-full-width workaround for that made a 100%-wide float that the
+            radio group — a flex container, so its own formatting context — could not
+            overlap: the two pills rendered off the right edge of the card, clipped. The
+            group is already named for assistive technology by its own aria-label. */}
+        <p className="micro-label mb-3">Which rubric</p>
+        <div className="flex gap-2" role="radiogroup" aria-label="Call type">
           {(["kickoff", "coaching"] as const).map((t) => (
             <button
               key={t}
@@ -86,7 +91,7 @@ export function PasteForm({ samples }: { samples: SampleOption[] }) {
             </button>
           ))}
         </div>
-      </fieldset>
+      </div>
 
       {samples.length > 0 && (
         <div className="space-y-3 border-t border-border px-6 py-5">

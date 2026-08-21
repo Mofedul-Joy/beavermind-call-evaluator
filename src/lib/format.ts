@@ -26,10 +26,24 @@ export function formatDate(iso: string): string {
   return `${formatted} UTC`;
 }
 
+/**
+ * The same instant, short enough for a list column.
+ *
+ * The full form runs to "Aug 21, 2026, 8:59 PM UTC" — 25 characters in a column that has
+ * to share a row with five others, which pushed the table past its container and left it
+ * scrolling sideways at full desktop width. The year goes, since every run in the list is
+ * recent and the full timestamp is on the report itself; the time stays, because several
+ * runs a day is the normal case and a date alone would not order them.
+ */
 export function formatDateShort(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: UTC }).format(
-    new Date(iso)
-  );
+  const formatted = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: UTC,
+  }).format(new Date(iso));
+  return `${formatted} UTC`;
 }
 
 export type Tone = "green" | "amber" | "red" | "neutral";
@@ -53,9 +67,19 @@ export const toneClasses: Record<Tone, { bg: string; text: string }> = {
   green: { bg: "bg-green-bg", text: "text-green-ink" },
   amber: { bg: "bg-amber-bg", text: "text-amber-ink" },
   red: { bg: "bg-red-bg", text: "text-red-ink" },
-  neutral: { bg: "bg-black/5", text: "text-muted" },
+  neutral: { bg: "bg-black/5", text: "text-body" },
 };
 
 export function callTypeLabel(callType: "coaching" | "kickoff"): string {
   return callType === "coaching" ? "Coaching" : "Kick-off";
+}
+
+/**
+ * The name the report saves under. Shared by the API route's Content-Disposition and by
+ * the download button, which saves the blob itself and so sets the name a second time —
+ * a browser saving a blob: URL has no header to read it from.
+ */
+export function pdfFilename(clientName: string | null | undefined): string {
+  const stem = (clientName ?? "evaluation").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
+  return `${stem || "evaluation"}-report.pdf`;
 }

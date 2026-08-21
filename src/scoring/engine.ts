@@ -14,7 +14,9 @@ import type {
   DimensionResult,
   Evidence,
   ModelAnswer,
+  ModelDimensionAnswer,
   NumberedTranscript,
+  RationalePoint,
   Report,
   ScoreTrace,
 } from './types'
@@ -191,6 +193,31 @@ function hydrate(t: NumberedTranscript, lines: number[]): Evidence[] {
 }
 
 /**
+ * Reduce the model's `points` to something the report can trust, or to nothing at all.
+ *
+ * The UI reads a PRESENT `points` array as "the scorer produced structure" and renders
+ * titled beats in place of the rationale paragraph. A one-beat or half-empty array would
+ * therefore swap a good paragraph for a worse fragment, so anything short of the
+ * contract's 2-to-4 titled beats is dropped entirely and the rationale renders exactly as
+ * it does today. Points on a dimension that was not scored are dropped for the same
+ * reason: there is no reasoning to break into beats.
+ *
+ * Same class of rule as `toModelAnswer` in `lib/schema.ts` — the schema can require the
+ * key but cannot express what makes its contents usable, so it is forced here rather than
+ * trusted from the model.
+ */
+function sanitisePoints(
+  points: RationalePoint[] | undefined,
+  status: ModelDimensionAnswer['status'],
+): RationalePoint[] | undefined {
+  if (status !== 'scored' || !points) return undefined
+  const clean = points
+    .map((p) => ({ title: p?.title?.trim() ?? '', body: p?.body?.trim() ?? '' }))
+    .filter((p) => p.title && p.body)
+  return clean.length >= 2 ? clean : undefined
+}
+
+/**
  * Turn a validated answer into a report.
  *
  * Order matters and follows the rubric: dimension scores settle first, then dimension
@@ -277,6 +304,7 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
       rawScore: raw,
       bucketLabel: score === null ? null : labelFor(d, score),
       rationale: a.rationale,
+      points: sanitisePoints(a.points, a.status),
       evidence: hydrate(t, a.evidence),
       quickFix: a.quickFix,
       statusReason: a.statusReason,
@@ -346,6 +374,9 @@ export function buildReport(answer: ModelAnswer, rubric: CompiledRubric, t: Numb
   return {
     theOneThing: {
       change: answer.theOneThing.change,
+      // Same rule, smaller: the UI renders `detail` under the headline only when there is
+      // one, so a whitespace-only string must not reach it as an empty paragraph.
+      detail: answer.theOneThing.detail?.trim() || undefined,
       wouldScore: answer.theOneThing.wouldScore,
       evidence: hydrate(t, answer.theOneThing.evidence),
     },

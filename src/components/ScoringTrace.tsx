@@ -28,7 +28,9 @@ export function ScoringTrace({ trace, forceOpen = false }: { trace: ScoreTrace; 
         className="flex w-full items-center justify-between px-5 py-4 text-left disabled:cursor-default"
       >
         <span className="micro-label">Scoring trace</span>
-        <span className="text-sm text-muted">{open ? "Hide" : "How this number was reached"}</span>
+        <span className="text-sm text-muted">
+          {forceOpen ? "How this number was reached" : open ? "Hide" : "How this number was reached"}
+        </span>
       </button>
 
       {open && (

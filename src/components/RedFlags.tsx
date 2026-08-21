@@ -54,14 +54,14 @@ function Flag({ flag, showAll }: { flag: Report["redFlags"][number]; showAll: bo
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">{flag.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-red-ink/90">{flag.why}</p>
+            <p className="mt-1 text-sm leading-relaxed text-red-ink">{flag.why}</p>
 
             {hasEvidence && !showAll && (
               <button
                 type="button"
                 aria-expanded={expanded}
                 onClick={() => setOpen((v) => !v)}
-                className="mt-2 text-xs font-medium text-red-ink/80 underline decoration-red-ink/25 underline-offset-4 transition-colors hover:text-red-ink"
+                className="mt-2 text-xs font-medium text-red-ink underline decoration-red-ink/30 underline-offset-4 transition-colors hover:decoration-red-ink"
               >
                 {expanded ? "Hide the transcript" : `Show the ${flag.evidence.length} line${flag.evidence.length === 1 ? "" : "s"} this rests on`}
               </button>

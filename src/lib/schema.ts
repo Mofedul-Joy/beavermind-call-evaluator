@@ -22,6 +22,17 @@ import type { ModelAnswer } from '../scoring/types'
 
 const LINE_NUMBERS = { type: 'array', items: { type: 'integer' } }
 
+/** One beat of a dimension's reasoning. Same shared-item trick as the arrays above. */
+const RATIONALE_POINT = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    body: { type: 'string' },
+  },
+  required: ['title', 'body'],
+  additionalProperties: false,
+}
+
 function dimensionItemSchema(rubric: CompiledRubric) {
   return {
     type: 'object',
@@ -30,11 +41,14 @@ function dimensionItemSchema(rubric: CompiledRubric) {
       status: { type: 'string', enum: ['scored', 'not_evidenced', 'disabled'] },
       score: { type: 'number' },
       rationale: { type: 'string' },
+      points: { type: 'array', items: RATIONALE_POINT },
       evidence: LINE_NUMBERS,
       quickFix: { type: 'string' },
       statusReason: { type: 'string' },
     },
-    required: ['key', 'status', 'score', 'rationale', 'evidence', 'quickFix', 'statusReason'],
+    // `points` is required here so the model always produces it, and optional in the
+    // contract so jsonb rows written before it existed still parse.
+    required: ['key', 'status', 'score', 'rationale', 'points', 'evidence', 'quickFix', 'statusReason'],
     additionalProperties: false,
   }
 }
@@ -57,10 +71,11 @@ const THE_ONE_THING = {
   type: 'object',
   properties: {
     change: { type: 'string' },
+    detail: { type: 'string' },
     wouldScore: { type: 'number' },
     evidence: LINE_NUMBERS,
   },
-  required: ['change', 'wouldScore', 'evidence'],
+  required: ['change', 'detail', 'wouldScore', 'evidence'],
   additionalProperties: false,
 }
 

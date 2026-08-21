@@ -33,7 +33,7 @@
   --color-amber-ink: var(--color-amber-ink);
   --color-red-bg: var(--color-red-bg);
   --color-red-ink: var(--color-red-ink);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-switzer), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
