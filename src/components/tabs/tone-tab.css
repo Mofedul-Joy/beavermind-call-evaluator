@@ -1,0 +1,92 @@
+/*
+ * TONE tab's own token set. `src/app/globals.css` is owned elsewhere, so this file
+ * carries a parallel light/dark palette scoped under `.tone-tab`, matching the site's
+ * bone/near-black language (see references/ui-reference.md) instead of importing it.
+ */
+
+.tone-tab {
+  --tone-bg: #f6f5f1;
+  --tone-card: #ffffff;
+  --tone-border: #eae8e3;
+  --tone-ink: #111111;
+  --tone-body: #57534e;
+  --tone-muted: #73706b;
+
+  --tone-green-bg: #eef6ee;
+  --tone-green-ink: #1e7d34;
+  --tone-amber-bg: #fbf1e2;
+  --tone-amber-ink: #a15e09;
+  --tone-red-bg: #fbeaea;
+  --tone-red-ink: #c22b2b;
+
+  color: var(--tone-ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tone-tab {
+    --tone-bg: #171613;
+    --tone-card: #1e1c19;
+    --tone-border: #322f2a;
+    --tone-ink: #f4f2ee;
+    --tone-body: #c2beb6;
+    --tone-muted: #948f87;
+
+    --tone-green-bg: #16281a;
+    --tone-green-ink: #6fce85;
+    --tone-amber-bg: #2e2411;
+    --tone-amber-ink: #e6a94a;
+    --tone-red-bg: #301616;
+    --tone-red-ink: #e57979;
+  }
+}
+
+.tone-card {
+  background: var(--tone-card);
+  border: 1px solid var(--tone-border);
+  border-radius: 12px;
+}
+
+.tone-micro-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tone-muted);
+  font-weight: 600;
+}
+
+.tone-chip {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+}
+.tone-chip-neutral {
+  background: color-mix(in srgb, var(--tone-ink) 6%, transparent);
+  color: var(--tone-muted);
+}
+.tone-chip-green {
+  background: var(--tone-green-bg);
+  color: var(--tone-green-ink);
+}
+.tone-chip-amber {
+  background: var(--tone-amber-bg);
+  color: var(--tone-amber-ink);
+}
+.tone-chip-red {
+  background: var(--tone-red-bg);
+  color: var(--tone-red-ink);
+}
+
+.tone-fill {
+  background: color-mix(in srgb, var(--tone-ink) 4%, transparent);
+}
+
+.tone-link {
+  color: var(--tone-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--tone-border);
+  text-underline-offset: 2px;
+}
+.tone-link:hover {
+  text-decoration-color: var(--tone-ink);
+}
